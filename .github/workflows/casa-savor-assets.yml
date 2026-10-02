@@ -1,0 +1,77 @@
+name: Casa Savor - extrair imagens
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract-assets:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extrair imagens embutidas
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, base64
+
+          page = Path("casa-savor-site/index.html")
+          html = page.read_text(encoding="utf-8")
+          pattern = re.compile(r"data:image/webp;base64,([A-Za-z0-9+/=]+)")
+          matches = list(pattern.finditer(html))
+          if not matches:
+              print("Nenhuma imagem embutida encontrada; nada a fazer.")
+              raise SystemExit(0)
+
+          unique = []
+          seen = set()
+          for match in matches:
+              payload = match.group(1)
+              if payload not in seen:
+                  seen.add(payload)
+                  unique.append(payload)
+
+          names = [
+              "logo-casa-savor.webp",
+              "hero-casa-savor.webp",
+              "carla-pavao.webp",
+              "embalagens.webp",
+              "degustacao.webp",
+          ]
+          if len(unique) != len(names):
+              raise RuntimeError(f"Esperadas {len(names)} imagens únicas; encontradas {len(unique)}")
+
+          assets = Path("casa-savor-site/assets")
+          assets.mkdir(parents=True, exist_ok=True)
+
+          mapping = {}
+          for payload, name in zip(unique, names):
+              target = assets / name
+              target.write_bytes(base64.b64decode(payload))
+              mapping[payload] = f"assets/{name}"
+              print(f"Gravado: {target}")
+
+          def replace(match):
+              return mapping[match.group(1)]
+
+          page.write_text(pattern.sub(replace, html), encoding="utf-8")
+          print("index.html convertido para arquivos de imagem hospedados no GitHub.")
+
+      - name: Commit dos assets
+        run: |
+          if git diff --quiet; then
+            echo "Sem alterações."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add casa-savor-site/index.html casa-savor-site/assets
+          git commit -m "chore: host Casa Savor images in GitHub"
+          git push
