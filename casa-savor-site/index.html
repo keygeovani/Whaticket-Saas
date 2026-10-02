@@ -389,6 +389,36 @@
   0%,100%{transform:translateY(0) scale(1)}
   50%{transform:translateY(-7px) scale(1.008)}
 }
+
+/* Desktop: mesmo movimento premium do card mobile */
+@media (min-width:561px){
+  .hero-media .floating-note{
+    overflow:hidden;
+    will-change:transform;
+    animation:
+      noteEntranceDesktop .9s cubic-bezier(.2,.85,.2,1.2) .3s both,
+      noteFloatDesktop 3.8s ease-in-out 1.2s infinite;
+  }
+  .hero-media .floating-note::before{
+    content:"";
+    position:absolute;
+    inset:-45% auto -45% -68%;
+    width:44%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);
+    transform:skewX(-18deg);
+    animation:noteShine 4.8s ease-in-out 1.9s infinite;
+    pointer-events:none;
+  }
+}
+@keyframes noteEntranceDesktop{
+  0%{opacity:0;transform:translate3d(58px,-14px,78px) scale(.76) rotate(9deg)}
+  62%{opacity:1;transform:translate3d(-5px,3px,78px) scale(1.05) rotate(1deg)}
+  100%{opacity:1;transform:translate3d(0,0,78px) scale(1) rotate(3deg)}
+}
+@keyframes noteFloatDesktop{
+  0%,100%{transform:translate3d(0,0,78px) rotate(3deg)}
+  50%{transform:translate3d(0,-10px,78px) rotate(1deg)}
+}
 /* END CASA SAVOR CINEMATIC HERO */
 </style>
 </head>
